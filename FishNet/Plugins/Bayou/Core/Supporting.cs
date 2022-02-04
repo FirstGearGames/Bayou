@@ -22,7 +22,7 @@ namespace FishNet.Bayou
 
         public Packet(int sender, ArraySegment<byte> segment, byte channel)
         {
-            Data = ByteArrayPool.Retrieve(segment.Count, true);
+            Data = ByteArrayPool.Retrieve(segment.Count);
             Buffer.BlockCopy(segment.Array, segment.Offset, Data, 0, segment.Count);
             ConnectionId = sender;
             Length = segment.Count;
@@ -36,7 +36,7 @@ namespace FishNet.Bayou
 
         public void Dispose()
         {
-            ByteArrayPool.Store(Data, true);
+            ByteArrayPool.Store(Data);
         }
 
     }
