@@ -33,9 +33,9 @@ namespace FishNet.Bayou
 
             _connectionState = connectionState;
             if (asServer)
-                Transport.HandleServerConnectionState(new ServerConnectionStateArgs(connectionState));
+                Transport.HandleServerConnectionState(new ServerConnectionStateArgs(connectionState, Transport.Index));
             else
-                Transport.HandleClientConnectionState(new ClientConnectionStateArgs(connectionState));
+                Transport.HandleClientConnectionState(new ClientConnectionStateArgs(connectionState, Transport.Index));
         }
         #endregion
 

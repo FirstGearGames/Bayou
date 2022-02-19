@@ -69,11 +69,6 @@ namespace FishNet.Bayou
         #endregion
 
         #region Initialization and unity.
-        public override void Initialize(NetworkManager networkManager)
-        {
-            base.Initialize(networkManager);
-        }
-
         protected void OnDestroy()
         {
             Shutdown();
@@ -415,23 +410,8 @@ namespace FishNet.Bayou
             {
                 if (NetworkManager.CanLog(LoggingType.Warning))
                     Debug.LogWarning($"Channel of {channelId} is out of range of supported channels. Channel will be defaulted to reliable.");
-                channelId = GetDefaultReliableChannel();
+                channelId = 0;
             }
-        }
-
-        /// <summary>
-        /// Returns which channel to use by default for reliable.
-        /// </summary>
-        public override byte GetDefaultReliableChannel()
-        {
-            return 0;
-        }
-        /// <summary>
-        /// Returns which channel to use by default for unreliable.
-        /// </summary>
-        public override byte GetDefaultUnreliableChannel()
-        {
-            return 1;
         }
         /// <summary>
         /// Gets the MTU for a channel. This should take header size into consideration.

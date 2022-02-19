@@ -214,7 +214,7 @@ namespace FishNet.Bayou.Server
             {
                 _server.KickClient(connectionId);
                 _clients.Remove(connectionId);
-                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionStates.Stopped, connectionId));
+                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionStates.Stopped, connectionId, Transport.Index));
             }
 
             return true;
@@ -324,7 +324,7 @@ namespace FishNet.Bayou.Server
                 if (connectionEvent.Connected)
                     _clients.Add(connectionEvent.ConnectionId);
                 RemoteConnectionStates state = (connectionEvent.Connected) ? RemoteConnectionStates.Started : RemoteConnectionStates.Stopped;
-                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(state, connectionEvent.ConnectionId));
+                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(state, connectionEvent.ConnectionId, Transport.Index));
             }
 
             //Read data from clients.
