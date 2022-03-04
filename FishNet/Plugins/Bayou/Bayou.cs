@@ -39,6 +39,12 @@ namespace FishNet.Bayou
 
         [Header("Client")]
         /// <summary>
+        /// True to connect using WSS.
+        /// </summary>
+        [Tooltip("True to connect using WSS.")]
+        [SerializeField]
+        private bool _useWss = true;
+        /// <summary>
         /// Address to connect.
         /// </summary>
         [Tooltip("Address to connect.")]
@@ -223,6 +229,14 @@ namespace FishNet.Bayou
 
         #region Configuration.
         /// <summary>
+        /// Sets UseWSS value.
+        /// </summary>
+        /// <param name="useWss"></param>
+        public void SetUseWSS(bool useWss)
+        {
+            _useWss = useWss;
+        }
+        /// <summary>
         /// How long in seconds until either the server or client socket must go without data before being timed out.
         /// </summary>
         /// <param name="asServer">True to get the timeout for the server socket, false for the client socket.</param>
@@ -376,7 +390,7 @@ namespace FishNet.Bayou
         private bool StartClient(string address)
         {
             _client.Initialize(this, _mtu);
-            return _client.StartConnection(address, _port);
+            return _client.StartConnection(address, _port, _useWss);
         }
 
         /// <summary>

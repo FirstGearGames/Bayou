@@ -54,7 +54,7 @@ namespace FishNet.Bayou.Client
         /// <summary>
         /// Threaded operation to process client actions.
         /// </summary>
-        private void Socket()
+        private void Socket(bool useWss)
         {
 
             TcpConfig tcpConfig = new TcpConfig(false, 5000, 20000);
@@ -65,9 +65,10 @@ namespace FishNet.Bayou.Client
             _client.onData += _client_onData;
             _client.onError += _client_onError;
 
+            string scheme = (useWss) ? "wss" : "ws";
             UriBuilder builder = new UriBuilder
             {
-                Scheme = "ws",
+                Scheme = scheme,
                 Host = _address,
                 Port = _port
             };
@@ -112,7 +113,7 @@ namespace FishNet.Bayou.Client
         /// <param name="port"></param>
         /// <param name="channelsCount"></param>
         /// <param name="pollTime"></param>
-        internal bool StartConnection(string address, ushort port)
+        internal bool StartConnection(string address, ushort port, bool useWss)
         {
             if (base.GetConnectionState() != LocalConnectionStates.Stopped)
                 return false;
@@ -123,7 +124,7 @@ namespace FishNet.Bayou.Client
             _address = address;
 
             ResetQueues();
-            Socket();
+            Socket(useWss);
 
             return true;
         }

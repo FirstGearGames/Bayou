@@ -1,3 +1,6 @@
+1.2.0
+	- WSS can now be toggled in the inspector and set through Bayou.SetUseWss.
+
 1.1.0
 	- FishNetworking 1.3.1 Multipass transport support.
 	- SimpleWebTransport fix (Runtime is not defined for unity 2021) https://github.com/James-Frowen/SimpleWebTransport/commit/945b50dbad5b71c43e2bdaa4033f87d3f62c5572
