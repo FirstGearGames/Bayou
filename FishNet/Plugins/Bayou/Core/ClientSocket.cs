@@ -88,10 +88,7 @@ namespace FishNet.Bayou.Client
 
             Channel channel;
             data = base.RemoveChannel(data, out channel);
-            ClientReceivedDataArgs dataArgs = new ClientReceivedDataArgs();
-            dataArgs.Data = data;
-            dataArgs.Channel = channel;
-
+            ClientReceivedDataArgs dataArgs = new ClientReceivedDataArgs(data, channel, base.Transport.Index);
             base.Transport.HandleClientReceivedDataArgs(dataArgs);
         }
 

@@ -289,10 +289,7 @@ namespace FishNet.Bayou
         /// Sets which address the server will bind to.
         /// </summary>
         /// <param name="address"></param>
-        public override void SetServerBindAddress(string address)
-        {
-            
-        }
+        public override void SetServerBindAddress(string address) { }
         /// <summary>
         /// Gets which address the server will bind to.
         /// </summary>

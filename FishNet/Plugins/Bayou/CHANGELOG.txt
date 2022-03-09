@@ -1,3 +1,7 @@
+1.2.1
+	- More fixes to support Multipass transport.
+	- Removed ServerBindAddress as it was not being used.
+
 1.2.0
 	- WSS can now be toggled in the inspector and set through Bayou.SetUseWss.
 

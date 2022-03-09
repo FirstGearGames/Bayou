@@ -119,10 +119,7 @@ namespace FishNet.Bayou.Server
             Channel channel;
             ArraySegment<byte> segment = base.RemoveChannel(data, out channel);
 
-            ServerReceivedDataArgs dataArgs = new ServerReceivedDataArgs();
-            dataArgs.Data = segment;
-            dataArgs.Channel = channel;
-            dataArgs.ConnectionId = clientId;
+            ServerReceivedDataArgs dataArgs = new ServerReceivedDataArgs(segment, channel, clientId, base.Transport.Index);
             base.Transport.HandleServerReceivedDataArgs(dataArgs);
         }
 
@@ -214,7 +211,7 @@ namespace FishNet.Bayou.Server
             {
                 _server.KickClient(connectionId);
                 _clients.Remove(connectionId);
-                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionStates.Stopped, connectionId, Transport.Index));
+                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionStates.Stopped, connectionId, base.Transport.Index));
             }
 
             return true;
@@ -324,7 +321,7 @@ namespace FishNet.Bayou.Server
                 if (connectionEvent.Connected)
                     _clients.Add(connectionEvent.ConnectionId);
                 RemoteConnectionStates state = (connectionEvent.Connected) ? RemoteConnectionStates.Started : RemoteConnectionStates.Stopped;
-                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(state, connectionEvent.ConnectionId, Transport.Index));
+                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(state, connectionEvent.ConnectionId, base.Transport.Index));
             }
 
             //Read data from clients.
