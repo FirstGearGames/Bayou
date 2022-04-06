@@ -83,7 +83,7 @@ namespace FishNet.Bayou
             byte[] array = packet.Data;
             int dataLength = packet.Data.Length;
             //Need to resize to fit channel write. This will virtually never happen.
-            if (dataLength < writePosition)
+            if (dataLength <= writePosition)
                 Array.Resize(ref array, dataLength + 1);
 
             array[writePosition] = (byte)packet.Channel;

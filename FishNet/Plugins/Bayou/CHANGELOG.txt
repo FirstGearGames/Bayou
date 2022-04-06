@@ -1,3 +1,6 @@
+1.2.2
+	- Fixed rare index out of range error in AddChannel.
+
 1.2.1
 	- More fixes to support Multipass transport.
 	- Removed ServerBindAddress as it was not being used.
