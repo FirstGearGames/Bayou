@@ -1,3 +1,7 @@
+1.2.3
+	- Really fixed index issue in AddChannel.
+	- Updated namespaces to reflect other Fish-Networking namespaces.
+
 1.2.2
 	- Fixed rare index out of range error in AddChannel.
 

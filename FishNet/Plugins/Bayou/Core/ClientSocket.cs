@@ -1,11 +1,9 @@
-using FishNet.Transporting;
 using JamesFrowen.SimpleWeb;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
-namespace FishNet.Bayou.Client
+namespace FishNet.Transporting.Bayou.Client
 {
     public class ClientSocket : CommonSocket
     {

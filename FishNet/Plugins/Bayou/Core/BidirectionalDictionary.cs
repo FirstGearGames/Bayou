@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace FishNet.Bayou
+namespace FishNet.Transporting.Bayou
 {
     internal class BidirectionalDictionary<T1, T2> : IEnumerable
     {

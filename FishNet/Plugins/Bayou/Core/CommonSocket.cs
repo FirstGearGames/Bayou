@@ -1,8 +1,7 @@
-﻿using FishNet.Transporting;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace FishNet.Bayou
+namespace FishNet.Transporting.Bayou
 {
 
     public abstract class CommonSocket
@@ -46,7 +45,6 @@ namespace FishNet.Bayou
         protected Transport Transport = null;
         #endregion
 
-
         /// <summary>
         /// Sends data to connectionId.
         /// </summary>
@@ -80,15 +78,10 @@ namespace FishNet.Bayou
         internal void AddChannel(ref Packet packet)
         {
             int writePosition = packet.Length;
-            byte[] array = packet.Data;
-            int dataLength = packet.Data.Length;
-            //Need to resize to fit channel write. This will virtually never happen.
-            if (dataLength <= writePosition)
-                Array.Resize(ref array, dataLength + 1);
-
-            array[writePosition] = (byte)packet.Channel;
-            packet.Length += 1;
+            packet.AddLength(1);
+            packet.Data[writePosition] = (byte)packet.Channel;
         }
+
 
         /// <summary>
         /// Removes the channel, outputting it and returning a new ArraySegment.

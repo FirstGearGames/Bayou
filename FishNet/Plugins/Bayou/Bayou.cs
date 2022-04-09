@@ -1,12 +1,11 @@
 using FishNet.Managing;
 using FishNet.Managing.Logging;
 using FishNet.Managing.Transporting;
-using FishNet.Transporting;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace FishNet.Bayou
+namespace FishNet.Transporting.Bayou
 {
     [DisallowMultipleComponent]
     public class Bayou : Transport

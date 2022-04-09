@@ -1,12 +1,10 @@
-using FishNet.Transporting;
 using FishNet.Utility.Performance;
 using JamesFrowen.SimpleWeb;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
-namespace FishNet.Bayou.Server
+namespace FishNet.Transporting.Bayou.Server
 {
     public class ServerSocket : CommonSocket
     {

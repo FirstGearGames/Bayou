@@ -1,14 +1,16 @@
 ﻿using FishNet.Utility.Performance;
 using System;
 
-namespace FishNet.Bayou
+
+
+namespace FishNet.Transporting.Bayou
 {
 
 
     internal struct Packet
     {
         public readonly int ConnectionId;
-        public readonly byte[] Data;
+        public byte[] Data;
         public int Length;
         public readonly byte Channel;
 
@@ -34,6 +36,20 @@ namespace FishNet.Bayou
             return new ArraySegment<byte>(Data, 0, Length);
         }
 
+        /// <summary>
+        /// Adds on length and resizes Data if needed.
+        /// </summary>
+        /// <param name="length"></param>
+        public void AddLength(int length)
+        {
+            int totalNeeded = (Length + length);
+            if (Data.Length < totalNeeded)
+                Array.Resize(ref Data, totalNeeded);
+
+            Length += length;
+        }
+
+
         public void Dispose()
         {
             ByteArrayPool.Store(Data);
@@ -44,7 +60,8 @@ namespace FishNet.Bayou
 
 }
 
-namespace FishNet.Bayou.Server
+
+namespace FishNet.Transporting.Bayou.Server
 {
 
     internal struct RemoteConnectionEvent
