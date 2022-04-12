@@ -42,7 +42,7 @@ namespace FishNet.Transporting.Bayou
         /// </summary>
         [Tooltip("True to connect using WSS.")]
         [SerializeField]
-        private bool _useWss = true;
+        private bool _useWss = false;
         /// <summary>
         /// Address to connect.
         /// </summary>
@@ -367,7 +367,6 @@ namespace FishNet.Transporting.Bayou
         private bool StartServer()
         {
             _server.Initialize(this, _mtu);
-            string bindAddress = string.Empty;
             return _server.StartConnection(_port, _maximumClients);
         }
 

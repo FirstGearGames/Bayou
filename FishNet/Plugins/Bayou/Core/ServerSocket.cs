@@ -129,7 +129,7 @@ namespace FishNet.Transporting.Bayou.Server
             if (_server == null || !_server.Active)
                 return;
 
-            if (_clients.Count > _maximumClients)
+            if (_clients.Count >= _maximumClients)
                 _server.KickClient(clientId);
             else
                 _remoteConnectionEvents.Enqueue(new RemoteConnectionEvent(true, clientId));

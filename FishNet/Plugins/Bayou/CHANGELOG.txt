@@ -1,3 +1,7 @@
+1.2.4
+	- Fixed maximum clients allowing 1 additional client to connect.
+	- UseWSS is now false by default.
+
 1.2.3
 	- Really fixed index issue in AddChannel.
 	- Updated namespaces to reflect other Fish-Networking namespaces.
