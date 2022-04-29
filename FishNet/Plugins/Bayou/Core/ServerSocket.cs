@@ -62,6 +62,10 @@ namespace FishNet.Transporting.Bayou.Server
         /// Server socket manager.
         /// </summary>
         private SimpleWebServer _server;
+        /// <summary>
+        /// SslConfiguration to use.
+        /// </summary>
+        private SslConfiguration _sslConfiguration;
         #endregion
 
         ~ServerSocket()
@@ -73,8 +77,9 @@ namespace FishNet.Transporting.Bayou.Server
         /// Initializes this for use.
         /// </summary>
         /// <param name="t"></param>
-        internal void Initialize(Transport t, int unreliableMTU)
+        internal void Initialize(Transport t, int unreliableMTU, SslConfiguration config)
         {
+            _sslConfiguration = config;
             base.Transport = t;
             _mtu = unreliableMTU;
         }
@@ -86,7 +91,13 @@ namespace FishNet.Transporting.Bayou.Server
         private void Socket()
         {
             TcpConfig tcpConfig = new TcpConfig(false, 5000, 20000);
-            _server = new SimpleWebServer(5000, tcpConfig, _mtu, 5000, new SslConfig());
+            SslConfig config;
+            if (!_sslConfiguration.Enabled)
+                config = new SslConfig();
+            else
+                config = new SslConfig(_sslConfiguration.Enabled, _sslConfiguration.CertificatePath, _sslConfiguration.CertificatePassword,
+                    _sslConfiguration.SslProtocol);
+            _server = new SimpleWebServer(5000, tcpConfig, _mtu, 5000, config);
 
             _server.onConnect += _server_onConnect;
             _server.onDisconnect += _server_onDisconnect;

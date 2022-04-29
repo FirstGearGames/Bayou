@@ -1,6 +1,7 @@
 using FishNet.Managing;
 using FishNet.Managing.Logging;
 using FishNet.Managing.Transporting;
+using JamesFrowen.SimpleWeb;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -12,6 +13,22 @@ namespace FishNet.Transporting.Bayou
     {
 
         #region Serialized.
+        [Header("Security")]
+        /// <summary>
+        /// True to connect using WSS.
+        /// </summary>
+        [Tooltip("True to connect using WSS.")]
+        [SerializeField]
+        private bool _useWss = false;
+#if UNITY_SERVER || UNITY_EDITOR
+        /// <summary>
+        /// Configuration to use for SSL.
+        /// </summary>
+        [Tooltip("Configuration to use for SSL.")]
+        [SerializeField]
+        private SslConfiguration _sslConfiguration;
+#endif
+
         [Header("Channels")]
         /// <summary>
         /// Maximum transmission unit for this transport.
@@ -38,20 +55,14 @@ namespace FishNet.Transporting.Bayou
 
         [Header("Client")]
         /// <summary>
-        /// True to connect using WSS.
-        /// </summary>
-        [Tooltip("True to connect using WSS.")]
-        [SerializeField]
-        private bool _useWss = false;
-        /// <summary>
         /// Address to connect.
         /// </summary>
         [Tooltip("Address to connect.")]
         [SerializeField]
         private string _clientAddress = "localhost";
-        #endregion
+#endregion
 
-        #region Private.
+#region Private.
         /// <summary>
         /// Server socket and handler.
         /// </summary>
@@ -60,9 +71,9 @@ namespace FishNet.Transporting.Bayou
         /// Client socket and handler.
         /// </summary>
         private Client.ClientSocket _client = new Client.ClientSocket();
-        #endregion
+#endregion
 
-        #region Const.
+#region Const.
         /// <summary>
         /// Minimum UDP packet size allowed.
         /// </summary>
@@ -71,16 +82,16 @@ namespace FishNet.Transporting.Bayou
         /// Maximum UDP packet size allowed.
         /// </summary>
         private const int MAXIMUM_MTU = ushort.MaxValue;
-        #endregion
+#endregion
 
-        #region Initialization and unity.
+#region Initialization and unity.
         protected void OnDestroy()
         {
             Shutdown();
         }
-        #endregion
+#endregion
 
-        #region ConnectionStates.
+#region ConnectionStates.
         /// <summary>
         /// Gets the address of a remote connection Id.
         /// </summary>
@@ -145,9 +156,9 @@ namespace FishNet.Transporting.Bayou
         {
             OnRemoteConnectionState?.Invoke(connectionStateArgs);
         }
-        #endregion
+#endregion
 
-        #region Iterating.
+#region Iterating.
         /// <summary>
         /// Processes data received by the socket.
         /// </summary>
@@ -171,9 +182,9 @@ namespace FishNet.Transporting.Bayou
             else
                 _client.IterateOutgoing();
         }
-        #endregion
+#endregion
 
-        #region ReceivedData.
+#region ReceivedData.
         /// <summary>
         /// Called when client receives data.
         /// </summary>
@@ -198,9 +209,9 @@ namespace FishNet.Transporting.Bayou
         {
             OnServerReceivedData?.Invoke(receivedDataArgs);
         }
-        #endregion
+#endregion
 
-        #region Sending.
+#region Sending.
         /// <summary>
         /// Sends to the server or all clients.
         /// </summary>
@@ -224,9 +235,9 @@ namespace FishNet.Transporting.Bayou
             SanitizeChannel(ref channelId);
             _server.SendToClient(channelId, segment, connectionId);
         }
-        #endregion
+#endregion
 
-        #region Configuration.
+#region Configuration.
         /// <summary>
         /// Sets UseWSS value.
         /// </summary>
@@ -313,9 +324,9 @@ namespace FishNet.Transporting.Bayou
         {
             return _port;
         }
-        #endregion
+#endregion
 
-        #region Start and stop.
+#region Start and stop.
         /// <summary>
         /// Starts the local server or client using configured settings.
         /// </summary>
@@ -360,13 +371,19 @@ namespace FishNet.Transporting.Bayou
             StopConnection(true);
         }
 
-        #region Privates.
+#region Privates.
         /// <summary>
         /// Starts server.
         /// </summary>
         private bool StartServer()
         {
-            _server.Initialize(this, _mtu);
+            SslConfiguration config;
+#if UNITY_SERVER
+            config = _sslConfiguration;
+#else
+            config = new SslConfiguration();
+#endif
+            _server.Initialize(this, _mtu, config);
             return _server.StartConnection(_port, _maximumClients);
         }
 
@@ -405,10 +422,10 @@ namespace FishNet.Transporting.Bayou
         {
             return _server.StopConnection(connectionId, immediately);
         }
-        #endregion
-        #endregion
+#endregion
+#endregion
 
-        #region Channels.
+#region Channels.
         /// <summary>
         /// If channelId is invalid then channelId becomes forced to reliable.
         /// </summary>
@@ -432,9 +449,9 @@ namespace FishNet.Transporting.Bayou
         {
             return _mtu;
         }
-        #endregion
+#endregion
 
-        #region Editor.
+#region Editor.
 #if UNITY_EDITOR
         private void OnValidate()
         {
@@ -444,6 +461,6 @@ namespace FishNet.Transporting.Bayou
                 _mtu = MAXIMUM_MTU;
         }
 #endif
-        #endregion
+#endregion
     }
 }
