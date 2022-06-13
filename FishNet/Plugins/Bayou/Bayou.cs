@@ -60,9 +60,9 @@ namespace FishNet.Transporting.Bayou
         [Tooltip("Address to connect.")]
         [SerializeField]
         private string _clientAddress = "localhost";
-#endregion
+        #endregion
 
-#region Private.
+        #region Private.
         /// <summary>
         /// Server socket and handler.
         /// </summary>
@@ -71,9 +71,9 @@ namespace FishNet.Transporting.Bayou
         /// Client socket and handler.
         /// </summary>
         private Client.ClientSocket _client = new Client.ClientSocket();
-#endregion
+        #endregion
 
-#region Const.
+        #region Const.
         /// <summary>
         /// Minimum UDP packet size allowed.
         /// </summary>
@@ -82,16 +82,16 @@ namespace FishNet.Transporting.Bayou
         /// Maximum UDP packet size allowed.
         /// </summary>
         private const int MAXIMUM_MTU = ushort.MaxValue;
-#endregion
+        #endregion
 
-#region Initialization and unity.
+        #region Initialization and unity.
         protected void OnDestroy()
         {
             Shutdown();
         }
-#endregion
+        #endregion
 
-#region ConnectionStates.
+        #region ConnectionStates.
         /// <summary>
         /// Gets the address of a remote connection Id.
         /// </summary>
@@ -117,7 +117,7 @@ namespace FishNet.Transporting.Bayou
         /// Gets the current local ConnectionState.
         /// </summary>
         /// <param name="server">True if getting ConnectionState for the server.</param>
-        public override LocalConnectionStates GetConnectionState(bool server)
+        public override LocalConnectionState GetConnectionState(bool server)
         {
             if (server)
                 return _server.GetConnectionState();
@@ -128,7 +128,7 @@ namespace FishNet.Transporting.Bayou
         /// Gets the current ConnectionState of a remote client on the server.
         /// </summary>
         /// <param name="connectionId">ConnectionId to get ConnectionState for.</param>
-        public override RemoteConnectionStates GetConnectionState(int connectionId)
+        public override RemoteConnectionState GetConnectionState(int connectionId)
         {
             return _server.GetConnectionState(connectionId);
         }
@@ -156,9 +156,9 @@ namespace FishNet.Transporting.Bayou
         {
             OnRemoteConnectionState?.Invoke(connectionStateArgs);
         }
-#endregion
+        #endregion
 
-#region Iterating.
+        #region Iterating.
         /// <summary>
         /// Processes data received by the socket.
         /// </summary>
@@ -182,9 +182,9 @@ namespace FishNet.Transporting.Bayou
             else
                 _client.IterateOutgoing();
         }
-#endregion
+        #endregion
 
-#region ReceivedData.
+        #region ReceivedData.
         /// <summary>
         /// Called when client receives data.
         /// </summary>
@@ -209,9 +209,9 @@ namespace FishNet.Transporting.Bayou
         {
             OnServerReceivedData?.Invoke(receivedDataArgs);
         }
-#endregion
+        #endregion
 
-#region Sending.
+        #region Sending.
         /// <summary>
         /// Sends to the server or all clients.
         /// </summary>
@@ -235,9 +235,9 @@ namespace FishNet.Transporting.Bayou
             SanitizeChannel(ref channelId);
             _server.SendToClient(channelId, segment, connectionId);
         }
-#endregion
+        #endregion
 
-#region Configuration.
+        #region Configuration.
         /// <summary>
         /// Sets UseWSS value.
         /// </summary>
@@ -269,7 +269,7 @@ namespace FishNet.Transporting.Bayou
         /// <param name="value"></param>
         public override void SetMaximumClients(int value)
         {
-            if (_server.GetConnectionState() != LocalConnectionStates.Stopped)
+            if (_server.GetConnectionState() != LocalConnectionState.Stopped)
             {
                 if (base.NetworkManager.CanLog(LoggingType.Warning))
                     Debug.LogWarning($"Cannot set maximum clients when server is running.");
@@ -299,12 +299,12 @@ namespace FishNet.Transporting.Bayou
         /// Sets which address the server will bind to.
         /// </summary>
         /// <param name="address"></param>
-        public override void SetServerBindAddress(string address) { }
+        public override void SetServerBindAddress(string address, IPAddressType addressType) { }
         /// <summary>
         /// Gets which address the server will bind to.
         /// </summary>
         /// <param name="address"></param>
-        public override string GetServerBindAddress()
+        public override string GetServerBindAddress(IPAddressType addressType)
         {
             return "localhost";
         }
@@ -324,9 +324,9 @@ namespace FishNet.Transporting.Bayou
         {
             return _port;
         }
-#endregion
+        #endregion
 
-#region Start and stop.
+        #region Start and stop.
         /// <summary>
         /// Starts the local server or client using configured settings.
         /// </summary>
@@ -371,7 +371,7 @@ namespace FishNet.Transporting.Bayou
             StopConnection(true);
         }
 
-#region Privates.
+        #region Privates.
         /// <summary>
         /// Starts server.
         /// </summary>
@@ -422,10 +422,10 @@ namespace FishNet.Transporting.Bayou
         {
             return _server.StopConnection(connectionId, immediately);
         }
-#endregion
-#endregion
+        #endregion
+        #endregion
 
-#region Channels.
+        #region Channels.
         /// <summary>
         /// If channelId is invalid then channelId becomes forced to reliable.
         /// </summary>
@@ -449,9 +449,9 @@ namespace FishNet.Transporting.Bayou
         {
             return _mtu;
         }
-#endregion
+        #endregion
 
-#region Editor.
+        #region Editor.
 #if UNITY_EDITOR
         private void OnValidate()
         {
@@ -461,6 +461,6 @@ namespace FishNet.Transporting.Bayou
                 _mtu = MAXIMUM_MTU;
         }
 #endif
-#endregion
+        #endregion
     }
 }

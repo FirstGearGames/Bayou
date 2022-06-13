@@ -70,7 +70,7 @@ namespace FishNet.Transporting.Bayou.Client
                 Host = _address,
                 Port = _port
             };
-            base.SetConnectionState(LocalConnectionStates.Starting, false);
+            base.SetConnectionState(LocalConnectionState.Starting, false);
             _client.Connect(builder.Uri);
         }
 
@@ -97,7 +97,7 @@ namespace FishNet.Transporting.Bayou.Client
 
         private void _client_onConnect()
         {
-            base.SetConnectionState(LocalConnectionStates.Started, false);
+            base.SetConnectionState(LocalConnectionState.Started, false);
         }
 
 
@@ -110,10 +110,10 @@ namespace FishNet.Transporting.Bayou.Client
         /// <param name="pollTime"></param>
         internal bool StartConnection(string address, ushort port, bool useWss)
         {
-            if (base.GetConnectionState() != LocalConnectionStates.Stopped)
+            if (base.GetConnectionState() != LocalConnectionState.Stopped)
                 return false;
 
-            base.SetConnectionState(LocalConnectionStates.Starting, false);
+            base.SetConnectionState(LocalConnectionState.Starting, false);
             //Assign properties.
             _port = port;
             _address = address;
@@ -130,12 +130,12 @@ namespace FishNet.Transporting.Bayou.Client
         /// </summary>
         internal bool StopConnection()
         {
-            if (base.GetConnectionState() == LocalConnectionStates.Stopped || base.GetConnectionState() == LocalConnectionStates.Stopping)
+            if (base.GetConnectionState() == LocalConnectionState.Stopped || base.GetConnectionState() == LocalConnectionState.Stopping)
                 return false;
 
-            base.SetConnectionState(LocalConnectionStates.Stopping, false);
+            base.SetConnectionState(LocalConnectionState.Stopping, false);
             _client.Disconnect();
-            base.SetConnectionState(LocalConnectionStates.Stopped, false);
+            base.SetConnectionState(LocalConnectionState.Stopped, false);
             return true;
         }
 
@@ -191,7 +191,7 @@ namespace FishNet.Transporting.Bayou.Client
         internal void SendToServer(byte channelId, ArraySegment<byte> segment)
         {
             //Not started, cannot send.
-            if (base.GetConnectionState() != LocalConnectionStates.Started)
+            if (base.GetConnectionState() != LocalConnectionState.Started)
                 return;
 
             base.Send(ref _outgoing, channelId, segment, -1);

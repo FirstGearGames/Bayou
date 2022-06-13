@@ -14,9 +14,9 @@ namespace FishNet.Transporting.Bayou.Server
         /// Gets the current ConnectionState of a remote client on the server.
         /// </summary>
         /// <param name="connectionId">ConnectionId to get ConnectionState for.</param>
-        internal RemoteConnectionStates GetConnectionState(int connectionId)
+        internal RemoteConnectionState GetConnectionState(int connectionId)
         {
-            RemoteConnectionStates state = _clients.Contains(connectionId) ? RemoteConnectionStates.Started : RemoteConnectionStates.Stopped;
+            RemoteConnectionState state = _clients.Contains(connectionId) ? RemoteConnectionState.Started : RemoteConnectionState.Stopped;
             return state;
         }
         #endregion
@@ -104,9 +104,9 @@ namespace FishNet.Transporting.Bayou.Server
             _server.onData += _server_onData;
             _server.onError += _server_onError;
 
-            base.SetConnectionState(LocalConnectionStates.Starting, true);
+            base.SetConnectionState(LocalConnectionState.Starting, true);
             _server.Start(_port);
-            base.SetConnectionState(LocalConnectionStates.Started, true);
+            base.SetConnectionState(LocalConnectionState.Started, true);
         }
 
         /// <summary>
@@ -172,10 +172,10 @@ namespace FishNet.Transporting.Bayou.Server
         /// </summary>
         internal bool StartConnection(ushort port, int maximumClients)
         {
-            if (base.GetConnectionState() != LocalConnectionStates.Stopped)
+            if (base.GetConnectionState() != LocalConnectionState.Stopped)
                 return false;
 
-            base.SetConnectionState(LocalConnectionStates.Starting, true);
+            base.SetConnectionState(LocalConnectionState.Starting, true);
 
             //Assign properties.
             _port = port;
@@ -190,13 +190,13 @@ namespace FishNet.Transporting.Bayou.Server
         /// </summary>
         internal bool StopConnection()
         {
-            if (_server == null || base.GetConnectionState() == LocalConnectionStates.Stopped || base.GetConnectionState() == LocalConnectionStates.Stopping)
+            if (_server == null || base.GetConnectionState() == LocalConnectionState.Stopped || base.GetConnectionState() == LocalConnectionState.Stopping)
                 return false;
 
             ResetQueues();
-            base.SetConnectionState(LocalConnectionStates.Stopping, true);
+            base.SetConnectionState(LocalConnectionState.Stopping, true);
             _server.Stop();
-            base.SetConnectionState(LocalConnectionStates.Stopped, true);
+            base.SetConnectionState(LocalConnectionState.Stopped, true);
 
             return true;
         }
@@ -207,7 +207,7 @@ namespace FishNet.Transporting.Bayou.Server
         /// <param name="connectionId">ConnectionId of the client to disconnect.</param>
         internal bool StopConnection(int connectionId, bool immediately)
         {
-            if (_server == null || base.GetConnectionState() != LocalConnectionStates.Started)
+            if (_server == null || base.GetConnectionState() != LocalConnectionState.Started)
                 return false;
 
             //Don't disconnect immediately, wait until next command iteration.
@@ -220,7 +220,7 @@ namespace FishNet.Transporting.Bayou.Server
             {
                 _server.KickClient(connectionId);
                 _clients.Remove(connectionId);
-                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionStates.Stopped, connectionId, base.Transport.Index));
+                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionState.Stopped, connectionId, base.Transport.Index));
             }
 
             return true;
@@ -275,7 +275,7 @@ namespace FishNet.Transporting.Bayou.Server
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DequeueOutgoing()
         {
-            if (base.GetConnectionState() != LocalConnectionStates.Started || _server == null)
+            if (base.GetConnectionState() != LocalConnectionState.Started || _server == null)
             {
                 //Not started, clear outgoing.
                 base.ClearPacketQueue(ref _outgoing);
@@ -329,7 +329,7 @@ namespace FishNet.Transporting.Bayou.Server
                 RemoteConnectionEvent connectionEvent = _remoteConnectionEvents.Dequeue();
                 if (connectionEvent.Connected)
                     _clients.Add(connectionEvent.ConnectionId);
-                RemoteConnectionStates state = (connectionEvent.Connected) ? RemoteConnectionStates.Started : RemoteConnectionStates.Stopped;
+                RemoteConnectionState state = (connectionEvent.Connected) ? RemoteConnectionState.Started : RemoteConnectionState.Stopped;
                 base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(state, connectionEvent.ConnectionId, base.Transport.Index));
             }
 
