@@ -1,4 +1,3 @@
-using FishNet.Utility.Performance;
 using JamesFrowen.SimpleWeb;
 using System;
 using System.Collections.Generic;
@@ -44,11 +43,11 @@ namespace FishNet.Transporting.Bayou.Server
         /// <summary>
         /// Ids to disconnect next iteration. This ensures data goes through to disconnecting remote connections. This may be removed in a later release.
         /// </summary>
-        private ListCache<int> _disconnectingNext = new ListCache<int>();
+        private List<int> _disconnectingNext = new List<int>();
         /// <summary>
         /// Ids to disconnect immediately.
         /// </summary>
-        private ListCache<int> _disconnectingNow = new ListCache<int>();
+        private List<int> _disconnectingNow = new List<int>();
         /// <summary>
         /// ConnectionEvents which need to be handled.
         /// </summary>
@@ -213,7 +212,7 @@ namespace FishNet.Transporting.Bayou.Server
             //Don't disconnect immediately, wait until next command iteration.
             if (!immediately)
             {
-                _disconnectingNext.AddValue(connectionId);
+                _disconnectingNext.Add(connectionId);
             }
             //Disconnect immediately.
             else
@@ -233,8 +232,8 @@ namespace FishNet.Transporting.Bayou.Server
         {
             _clients.Clear();
             base.ClearPacketQueue(ref _outgoing);
-            _disconnectingNext.Reset();
-            _disconnectingNow.Reset();
+            _disconnectingNext.Clear();
+            _disconnectingNow.Clear();
             _remoteConnectionEvents.Clear();
         }
 
@@ -246,26 +245,24 @@ namespace FishNet.Transporting.Bayou.Server
         {
             int count;
 
-            count = _disconnectingNow.Written;
+            count = _disconnectingNow.Count;
             //If there are disconnect nows.
             if (count > 0)
             {
-                List<int> collection = _disconnectingNow.Collection;
                 for (int i = 0; i < count; i++)
-                    StopConnection(collection[i], true);
+                    StopConnection(_disconnectingNow[i], true);
 
-                _disconnectingNow.Reset();
+                _disconnectingNow.Clear();
             }
 
-            count = _disconnectingNext.Written;
+            count = _disconnectingNext.Count;
             //If there are disconnect next.
             if (count > 0)
             {
-                List<int> collection = _disconnectingNext.Collection;
                 for (int i = 0; i < count; i++)
-                    _disconnectingNow.AddValue(collection[i]);
+                    _disconnectingNow.Add(_disconnectingNext[i]);
 
-                _disconnectingNext.Reset();
+                _disconnectingNext.Clear();
             }
         }
 
