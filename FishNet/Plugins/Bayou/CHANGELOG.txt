@@ -1,3 +1,8 @@
+4.0.0
+	- Fish-Networking 4.0.0 support. Backwards compatible to v3.
+	- Added an assembly definition.
+	- Moved Bayou folder to FishNet/Plugins.
+
 2.0.0
 	- Fish-Networking 2.0.0 support.
 
