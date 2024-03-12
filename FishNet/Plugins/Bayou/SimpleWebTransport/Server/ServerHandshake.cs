@@ -112,7 +112,11 @@ namespace JamesFrowen.SimpleWeb
 
         static void GetKey(string msg, byte[] keyBuffer)
         {
-            int start = msg.IndexOf(KeyHeaderString) + KeyHeaderString.Length;
+            var KeyIndex = msg.IndexOf(KeyHeaderString);
+            if ( KeyIndex <= -1 )
+                throw new Exception($"Request missing required header {KeyHeaderString}");
+                
+            int start = KeyIndex + KeyHeaderString.Length;
 
             Log.Verbose($"Handshake Key: {msg.Substring(start, KeyLength)}");
             Encoding.ASCII.GetBytes(msg, start, KeyLength, keyBuffer, 0);
