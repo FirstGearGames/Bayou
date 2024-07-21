@@ -110,9 +110,17 @@ namespace JamesFrowen.SimpleWeb
         }
 
 
-        static void GetKey(string msg, byte[] keyBuffer)
+       static void GetKey(string msg, byte[] keyBuffer)
         {
-            int start = msg.IndexOf(KeyHeaderString) + KeyHeaderString.Length;
+            //  really should be parsing http headers properly here, and then finding required header,
+            //  as this string could be crammed in anywhere in the message
+            //  but as a hack, for https://github.com/FirstGearGames/Bayou/issues/12
+            //  search for the key case insensitively 
+            var KeyIndex = msg.IndexOf(KeyHeaderString,StringComparison.InvariantCultureIgnoreCase);
+            if ( KeyIndex <= -1 )
+                throw new Exception($"Request missing required header {KeyHeaderString}");
+                
+            int start = KeyIndex + KeyHeaderString.Length;
 
             Log.Verbose($"Handshake Key: {msg.Substring(start, KeyLength)}");
             Encoding.ASCII.GetBytes(msg, start, KeyLength, keyBuffer, 0);
