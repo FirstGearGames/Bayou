@@ -105,6 +105,10 @@ namespace JamesFrowen.SimpleWeb
                     while (true)
                     {
                         TcpClient client = listener.AcceptTcpClient();
+                        // Disables Nagles Algorithm, which is turned on for TCP/IP clients by default (RFC 896).
+                        // Nagle's Algorithm causes small packets to be cached and sent together until an acknowledgment (ACK)
+                        // is received for a previously sent packet. This almost certainly introduces latency in the game.
+                        client.NoDelay = true;
                         tcpConfig.ApplyTo(client);
 
 
