@@ -1,3 +1,6 @@
+4.1.2
+    - Fixed disconnect callback occurring twice when forcefully calling StopConnection.
+    
 4.1.1
 	- Connection changes are no longer added to a pending queue but are now processed like other socket messages.
 

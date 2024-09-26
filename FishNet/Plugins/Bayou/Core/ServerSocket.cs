@@ -107,9 +107,19 @@ namespace FishNet.Transporting.Bayou.Server
         /// <summary>
         /// Called when a client connection errors.
         /// </summary>
-        private void _server_onError(int clientId, Exception arg2)
+        private void _server_onError(int connectionId, Exception arg2)
         {
-            StopConnection(clientId, true);
+            ConnectionStoppedOnSocket(connectionId);
+        }
+
+        /// <summary>
+        /// Called when a connection has stopped on a socket level.
+        /// </summary>
+        /// <param name="connectionId"></param>
+        private void ConnectionStoppedOnSocket(int connectionId) 
+        {
+            if (_clients.Remove(connectionId))
+                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionState.Stopped, connectionId, base.Transport.Index));
         }
 
         /// <summary>
@@ -149,9 +159,9 @@ namespace FishNet.Transporting.Bayou.Server
         /// <summary>
         /// Called when a client disconnects.
         /// </summary>
-        private void _server_onDisconnect(int clientId)
+        private void _server_onDisconnect(int connectionId)
         {
-            StopConnection(clientId, true);
+            ConnectionStoppedOnSocket(connectionId);
         }
 
         /// <summary>
@@ -212,20 +222,14 @@ namespace FishNet.Transporting.Bayou.Server
 
             //Don't disconnect immediately, wait until next command iteration.
             if (!immediately)
-            {
                 _disconnectingNext.Add(connectionId);
-            }
             //Disconnect immediately.
             else
-            {
                 _server.KickClient(connectionId);
-                _clients.Remove(connectionId);
-                base.Transport.HandleRemoteConnectionState(new RemoteConnectionStateArgs(RemoteConnectionState.Stopped, connectionId, base.Transport.Index));
-            }
 
             return true;
         }
-
+        
         /// <summary>
         /// Resets queues.
         /// </summary>
