@@ -1,15 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace JamesFrowen.SimpleWeb
 {
     public class SimpleWebServer
     {
-        readonly int maxMessagesPerTick;
+        public event Action<int> onConnect;
+        public event Action<int> onDisconnect;
+        public event Action<int, ArraySegment<byte>> onData;
+        public event Action<int, Exception> onError;
 
-        public readonly WebSocketServer server;
+        readonly int maxMessagesPerTick;
+        readonly WebSocketServer server;
         readonly BufferPool bufferPool;
+
+        public bool Active { get; private set; }
 
         public SimpleWebServer(int maxMessagesPerTick, TcpConfig tcpConfig, int maxMessageSize, int handshakeMaxSize, SslConfig sslConfig)
         {
@@ -17,16 +24,8 @@ namespace JamesFrowen.SimpleWeb
             // use max because bufferpool is used for both messages and handshake
             int max = Math.Max(maxMessageSize, handshakeMaxSize);
             bufferPool = new BufferPool(5, 20, max);
-
             server = new WebSocketServer(tcpConfig, maxMessageSize, handshakeMaxSize, sslConfig, bufferPool);
         }
-
-        public bool Active { get; private set; }
-
-        public event Action<int> onConnect;
-        public event Action<int> onDisconnect;
-        public event Action<int, ArraySegment<byte>> onData;
-        public event Action<int, Exception> onError;
 
         public void Start(ushort port)
         {
@@ -39,20 +38,13 @@ namespace JamesFrowen.SimpleWeb
             server.Stop();
             Active = false;
         }
-        public void SendAll(Dictionary<int, short> connections, ArraySegment<byte> source)
-        {
-            ArrayBuffer buffer = bufferPool.Take(source.Count);
-            buffer.CopyFrom(source);
-            buffer.SetReleasesRequired(connections.Count);
 
-            // make copy of array before for each, data sent to each client is the same
-            foreach (short id in connections.Values)
-            {
-                server.Send(id, buffer);
-            }
-        }
-
-        public void SendAll(HashSet<int> connectionIds, ArraySegment<byte> source)
+        /// <summary>
+        /// Sends to a list of connections, use <see cref="List{int}"/> version to avoid foreach allocation
+        /// </summary>
+        /// <param name="connectionIds"></param>
+        /// <param name="source"></param>
+        public void SendAll(List<int> connectionIds, ArraySegment<byte> source)
         {
             ArrayBuffer buffer = bufferPool.Take(source.Count);
             buffer.CopyFrom(source);
@@ -62,33 +54,77 @@ namespace JamesFrowen.SimpleWeb
             foreach (int id in connectionIds)
                 server.Send(id, buffer);
         }
+
+        /// <summary>
+        /// Sends to a list of connections, use <see cref="ICollection{int}"/> version when you are using a non-list collection (will allocate in foreach)
+        /// </summary>
+        /// <param name="connectionIds"></param>
+        /// <param name="source"></param>
+        public void SendAll(ICollection<int> connectionIds, ArraySegment<byte> source)
+        {
+            ArrayBuffer buffer = bufferPool.Take(source.Count);
+            buffer.CopyFrom(source);
+            buffer.SetReleasesRequired(connectionIds.Count);
+
+            // make copy of array before for each, data sent to each client is the same
+            foreach (int id in connectionIds)
+                server.Send(id, buffer);
+        }
+
+        /// <summary>
+        /// Sends to a list of connections, use <see cref="IEnumerable{int}"/> version in cases where you want to use LINQ to get connections (will allocate from LINQ functions and foreach)
+        /// </summary>
+        /// <param name="connectionIds"></param>
+        /// <param name="source"></param>
+        public void SendAll(IEnumerable<int> connectionIds, ArraySegment<byte> source)
+        {
+            ArrayBuffer buffer = bufferPool.Take(source.Count);
+            buffer.CopyFrom(source);
+            buffer.SetReleasesRequired(connectionIds.Count());
+
+            // make copy of array before for each, data sent to each client is the same
+            foreach (int id in connectionIds)
+                server.Send(id, buffer);
+        }
+
         public void SendOne(int connectionId, ArraySegment<byte> source)
         {
             ArrayBuffer buffer = bufferPool.Take(source.Count);
             buffer.CopyFrom(source);
-
             server.Send(connectionId, buffer);
         }
 
-        public bool KickClient(int connectionId)
-        {
-            return server.CloseConnection(connectionId);
-        }
+        public bool KickClient(int connectionId) => server.CloseConnection(connectionId);
 
+        public void GetClientEndPoint(int connectionId, out string address, out int port) => server.GetClientEndPoint(connectionId, out address, out port);
+        
         public string GetClientAddress(int connectionId)
         {
-            return server.GetClientAddress(connectionId);
+            server.GetClientEndPoint(connectionId, out string address, out int port);
+            return address;
         }
 
+        public Request GetClientRequest(int connectionId) => server.GetClientRequest(connectionId);
 
         /// <summary>
-        /// Processes all messages.
+        /// Processes all new messages
         /// </summary>
         public void ProcessMessageQueue()
         {
+            ProcessMessageQueue(null);
+        }
+
+        /// <summary>
+        /// Processes all messages while <paramref name="behaviour"/> is enabled
+        /// </summary>
+        /// <param name="behaviour"></param>
+        public void ProcessMessageQueue(MonoBehaviour behaviour)
+        {
             int processedCount = 0;
-            // check enabled every time incase behaviour was disabled after data
-            while (                
+            bool skipEnabled = behaviour == null;
+            // check enabled every time in case behaviour was disabled after data
+            while (
+                (skipEnabled || behaviour.enabled) &&
                 processedCount < maxMessagesPerTick &&
                 // Dequeue last
                 server.receiveQueue.TryDequeue(out Message next)
@@ -112,6 +148,11 @@ namespace JamesFrowen.SimpleWeb
                         onError?.Invoke(next.connId, next.exception);
                         break;
                 }
+            }
+
+            if (server.receiveQueue.Count > 0)
+            {
+                Log.Warn($"SimpleWebServer ProcessMessageQueue has {server.receiveQueue.Count} remaining.");
             }
         }
     }

@@ -14,6 +14,8 @@ namespace JamesFrowen.SimpleWeb
     }
     internal static class SendLoop
     {
+        private static readonly byte[] PongResponse = new byte[] { 0b1000_0000 | 10, 0 }; // FIN bit + PONG opcode, Length 0
+
         public struct Config
         {
             public readonly Connection conn;
@@ -39,7 +41,7 @@ namespace JamesFrowen.SimpleWeb
         {
             (Connection conn, int bufferSize, bool setMask) = config;
 
-            //Profiler.BeginThreadProfiling("SimpleWeb", $"SendLoop {conn.connId}");
+            Profiler.BeginThreadProfiling("SimpleWeb", $"SendLoop {conn.connId}");
 
             // create write buffer for this thread
             byte[] writeBuffer = new byte[bufferSize];
@@ -49,7 +51,7 @@ namespace JamesFrowen.SimpleWeb
                 TcpClient client = conn.client;
                 Stream stream = conn.stream;
 
-                // null check incase disconnect while send thread is starting
+                // null check in case disconnect while send thread is starting
                 if (client == null)
                     return;
 
@@ -57,6 +59,10 @@ namespace JamesFrowen.SimpleWeb
                 {
                     // wait for message
                     conn.sendPending.Wait();
+
+                    if (conn.needsPong)
+                        SendPongResponse(conn);
+
                     // wait for 1ms for mirror to send other messages
                     if (SendLoopConfig.sleepBeforeSend)
                     {
@@ -72,7 +78,8 @@ namespace JamesFrowen.SimpleWeb
                             // check if connected before sending message
                             if (!client.Connected)
                             {
-                                //Log.Info($"SendLoop {conn} not connected");
+                                Log.Info($"SendLoop {conn} not connected");
+                                msg.Release();
                                 return;
                             }
 
@@ -90,7 +97,7 @@ namespace JamesFrowen.SimpleWeb
                         }
 
                         // after no message in queue, send remaining messages
-                        // dont need to check offset > 0 because last message in queue will always be sent here
+                        // don't need to check offset > 0 because last message in queue will always be sent here
 
                         stream.Write(writeBuffer, 0, offset);
                     }
@@ -101,7 +108,8 @@ namespace JamesFrowen.SimpleWeb
                             // check if connected before sending message
                             if (!client.Connected)
                             {
-                                //Log.Info($"SendLoop {conn} not connected");
+                                Log.Info($"SendLoop {conn} not connected");
+                                msg.Release();
                                 return;
                             }
 
@@ -114,14 +122,8 @@ namespace JamesFrowen.SimpleWeb
 
                 Log.Info($"{conn} Not Connected");
             }
-            catch (ThreadInterruptedException e)
-            {
-                Log.InfoException(e);
-            }
-            catch (ThreadAbortException e)
-            {
-                Log.InfoException(e);
-            }
+            catch (ThreadInterruptedException e) { Log.InfoException(e); }
+            catch (ThreadAbortException e) { Log.InfoException(e); }
             catch (Exception e)
             {
                 Log.Exception(e);
@@ -132,6 +134,13 @@ namespace JamesFrowen.SimpleWeb
                 conn.Dispose();
                 maskHelper?.Dispose();
             }
+        }
+
+
+        static void SendPongResponse(Connection conn)
+        {
+            conn.stream.Write(PongResponse, 0, PongResponse.Length);
+            conn.needsPong = false;
         }
 
         /// <returns>new offset in buffer</returns>
@@ -149,7 +158,7 @@ namespace JamesFrowen.SimpleWeb
             offset += msgLength;
 
             // dump before mask on
-            //Log.DumpBuffer("Send", buffer, startOffset, offset);
+            Log.DumpBuffer("Send", buffer, startOffset, offset);
 
             if (setMask)
             {
@@ -160,7 +169,7 @@ namespace JamesFrowen.SimpleWeb
             return offset;
         }
 
-        static int WriteHeader(byte[] buffer, int startOffset, int msgLength, bool setMask)
+        public static int WriteHeader(byte[] buffer, int startOffset, int msgLength, bool setMask)
         {
             int sendLength = 0;
             const byte finished = 128;
@@ -183,7 +192,18 @@ namespace JamesFrowen.SimpleWeb
             }
             else
             {
-                throw new InvalidDataException($"Trying to send a message larger than {ushort.MaxValue} bytes");
+                buffer[startOffset + 1] = 127;
+                // must be 64 bytes, but we only have 32 bit length, so first 4 bits are 0
+                buffer[startOffset + 2] = 0;
+                buffer[startOffset + 3] = 0;
+                buffer[startOffset + 4] = 0;
+                buffer[startOffset + 5] = 0;
+                buffer[startOffset + 6] = (byte)(msgLength >> 24);
+                buffer[startOffset + 7] = (byte)(msgLength >> 16);
+                buffer[startOffset + 8] = (byte)(msgLength >> 8);
+                buffer[startOffset + 9] = (byte)msgLength;
+
+                sendLength += 9;
             }
 
             if (setMask)
@@ -194,28 +214,28 @@ namespace JamesFrowen.SimpleWeb
             return sendLength + startOffset;
         }
 
-        sealed class MaskHelper : IDisposable
+    }
+    sealed class MaskHelper : IDisposable
+    {
+        readonly byte[] maskBuffer;
+        readonly RNGCryptoServiceProvider random;
+
+        public MaskHelper()
         {
-            readonly byte[] maskBuffer;
-            readonly RNGCryptoServiceProvider random;
+            maskBuffer = new byte[4];
+            random = new RNGCryptoServiceProvider();
+        }
+        public void Dispose()
+        {
+            random.Dispose();
+        }
 
-            public MaskHelper()
-            {
-                maskBuffer = new byte[4];
-                random = new RNGCryptoServiceProvider();
-            }
-            public void Dispose()
-            {
-                random.Dispose();
-            }
+        public int WriteMask(byte[] buffer, int offset)
+        {
+            random.GetBytes(maskBuffer);
+            Buffer.BlockCopy(maskBuffer, 0, buffer, offset, 4);
 
-            public int WriteMask(byte[] buffer, int offset)
-            {
-                random.GetBytes(maskBuffer);
-                Buffer.BlockCopy(maskBuffer, 0, buffer, offset, 4);
-
-                return offset + 4;
-            }
+            return offset + 4;
         }
     }
 }

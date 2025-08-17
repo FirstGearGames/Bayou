@@ -1,3 +1,8 @@
+4.1.3
+    - Updated SimpleWebTransport.
+    - Updated license to reference only Bayou license.
+    - Added third party notice for SimpleWebTransport.
+    
 4.1.2
     - Fixed disconnect callback occurring twice when forcefully calling StopConnection.
     

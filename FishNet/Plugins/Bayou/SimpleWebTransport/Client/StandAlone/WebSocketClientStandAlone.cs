@@ -11,13 +11,12 @@ namespace JamesFrowen.SimpleWeb
         readonly TcpConfig tcpConfig;
         Connection conn;
 
-
-        internal WebSocketClientStandAlone(int maxMessageSize, int maxMessagesPerTick, TcpConfig tcpConfig) : base(maxMessageSize, maxMessagesPerTick)
+        internal WebSocketClientStandAlone(int maxMessageSize, int maxMessagesPerTick, TcpConfig tcpConfig, bool allowSSLErrors) : base(maxMessageSize, maxMessagesPerTick)
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
             throw new NotSupportedException();
 #else
-            sslHelper = new ClientSslHelper();
+            sslHelper = new ClientSslHelper(allowSSLErrors);
             handshake = new ClientHandshake();
             this.tcpConfig = tcpConfig;
 #endif
@@ -27,14 +26,14 @@ namespace JamesFrowen.SimpleWeb
         {
             state = ClientState.Connecting;
 
-            // create connection here before thread so that send queue exist for MiragePeer to send to
-            var client = new TcpClient();
+            // create connection here before thread so that send queue exist before connected
+            TcpClient client = new TcpClient();
             tcpConfig.ApplyTo(client);
 
             // create connection object here so dispose correctly disconnects on failed connect
             conn = new Connection(client, AfterConnectionDisposed);
 
-            var receiveThread = new Thread(() => ConnectAndReceiveLoop(serverAddress));
+            Thread receiveThread = new Thread(() => ConnectAndReceiveLoop(serverAddress));
             receiveThread.IsBackground = true;
             receiveThread.Start();
         }
@@ -45,11 +44,6 @@ namespace JamesFrowen.SimpleWeb
             {
                 // connection created above
                 TcpClient client = conn.client;
-                //TcpClient client = new TcpClient();
-                //tcpConfig.ApplyTo(client);
-
-                //// create connection object here so dispose correctly disconnects on failed connect
-                //conn = new Connection(client, AfterConnectionDisposed);
                 conn.receiveThread = Thread.CurrentThread;
 
                 try
@@ -85,9 +79,9 @@ namespace JamesFrowen.SimpleWeb
 
                 receiveQueue.Enqueue(new Message(EventType.Connected));
 
-                var sendThread = new Thread(() =>
+                Thread sendThread = new Thread(() =>
                 {
-                    var sendConfig = new SendLoop.Config(
+                    SendLoop.Config sendConfig = new SendLoop.Config(
                         conn,
                         bufferSize: Constants.HeaderSize + Constants.MaskSize + maxMessageSize,
                         setMask: true);
@@ -99,7 +93,7 @@ namespace JamesFrowen.SimpleWeb
                 sendThread.IsBackground = true;
                 sendThread.Start();
 
-                var config = new ReceiveLoop.Config(conn,
+                ReceiveLoop.Config config = new ReceiveLoop.Config(conn,
                     maxMessageSize,
                     false,
                     receiveQueue,
@@ -111,7 +105,7 @@ namespace JamesFrowen.SimpleWeb
             catch (Exception e) { Log.Exception(e); }
             finally
             {
-                // close here incase connect fails
+                // close here in case connect fails
                 conn?.Dispose();
             }
         }

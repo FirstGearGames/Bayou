@@ -17,12 +17,12 @@ namespace JamesFrowen.SimpleWeb
     /// </summary>
     public abstract class SimpleWebClient
     {
-        public static SimpleWebClient Create(int maxMessageSize, int maxMessagesPerTick, TcpConfig tcpConfig)
+        public static SimpleWebClient Create(int maxMessageSize, int maxMessagesPerTick, TcpConfig tcpConfig, bool allowSSLErrors = false)
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
             return new WebSocketClientWebGl(maxMessageSize, maxMessagesPerTick);
 #else
-            return new WebSocketClientStandAlone(maxMessageSize, maxMessagesPerTick, tcpConfig);
+            return new WebSocketClientStandAlone(maxMessageSize, maxMessagesPerTick, tcpConfig, allowSSLErrors);
 #endif
         }
 
@@ -63,7 +63,7 @@ namespace JamesFrowen.SimpleWeb
         {
             int processedCount = 0;
             bool skipEnabled = behaviour == null;
-            // check enabled every time incase behaviour was disabled after data
+            // check enabled every time in case behaviour was disabled after data
             while (
                 (skipEnabled || behaviour.enabled) &&
                 processedCount < maxMessagesPerTick &&

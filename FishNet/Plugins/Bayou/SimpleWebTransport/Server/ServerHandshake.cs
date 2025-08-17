@@ -13,10 +13,10 @@ namespace JamesFrowen.SimpleWeb
     {
         const int GetSize = 3;
         const int ResponseLength = 129;
-        const int KeyLength = 24;
+        internal const int KeyLength = 24;
         const int MergedKeyLength = 60;
-        const string KeyHeaderString = "Sec-WebSocket-Key: ";
-        // this isnt an offical max, just a reasonable size for a websocket handshake
+        const string KeyHeaderString = "\r\nSec-WebSocket-Key: ";
+        // this isn't an official max, just a reasonable size for a websocket handshake
         readonly int maxHttpHeaderSize = 3000;
 
         readonly SHA1 sha1 = SHA1.Create();
@@ -25,7 +25,7 @@ namespace JamesFrowen.SimpleWeb
         public ServerHandshake(BufferPool bufferPool, int handshakeMaxSize)
         {
             this.bufferPool = bufferPool;
-            this.maxHttpHeaderSize = handshakeMaxSize;
+            maxHttpHeaderSize = handshakeMaxSize;
         }
 
         ~ServerHandshake()
@@ -41,16 +41,15 @@ namespace JamesFrowen.SimpleWeb
             {
                 if (!ReadHelper.TryRead(stream, getHeader.array, 0, GetSize))
                     return false;
-                getHeader.count = GetSize;
 
+                getHeader.count = GetSize;
 
                 if (!IsGet(getHeader.array))
                 {
-                    //Log.Warn($"First bytes from client was not 'GET' for handshake, instead was {Log.BufferToString(getHeader.array, 0, GetSize)}");
+                    Log.Warn($"First bytes from client was not 'GET' for handshake, instead was {Log.BufferToString(getHeader.array, 0, GetSize)}");
                     return false;
                 }
             }
-
 
             string msg = ReadToEndForHandshake(stream);
 
@@ -60,6 +59,12 @@ namespace JamesFrowen.SimpleWeb
             try
             {
                 AcceptHandshake(stream, msg);
+
+                conn.request = new Request(msg);
+                conn.CalculateEndPoint(out string address, out int port);
+                conn.remoteAddress = address;
+                conn.remotePort = port;
+
                 return true;
             }
             catch (ArgumentException e)
@@ -109,10 +114,9 @@ namespace JamesFrowen.SimpleWeb
             }
         }
 
-
-        static void GetKey(string msg, byte[] keyBuffer)
+        internal static void GetKey(string msg, byte[] keyBuffer)
         {
-            int start = msg.IndexOf(KeyHeaderString) + KeyHeaderString.Length;
+            int start = msg.IndexOf(KeyHeaderString, StringComparison.InvariantCultureIgnoreCase) + KeyHeaderString.Length;
 
             Log.Verbose($"Handshake Key: {msg.Substring(start, KeyLength)}");
             Encoding.ASCII.GetBytes(msg, start, KeyLength, keyBuffer, 0);
@@ -126,7 +130,6 @@ namespace JamesFrowen.SimpleWeb
         byte[] CreateHash(byte[] keyBuffer)
         {
             Log.Verbose($"Handshake Hashing {Encoding.ASCII.GetString(keyBuffer, 0, MergedKeyLength)}");
-
             return sha1.ComputeHash(keyBuffer, 0, MergedKeyLength);
         }
 
