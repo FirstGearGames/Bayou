@@ -116,10 +116,10 @@ namespace JamesFrowen.SimpleWeb
         {
             if (request.Headers.TryGetValue("X-Forwarded-For", out string forwardFor))
             {
-                string actualClientIP = forwardFor.ToString().Split(',').First();
-                // Remove the port number from the address
-                address = actualClientIP.Split(':').First();
-                port = int.Parse(actualClientIP.Split(':').Last());
+                string actualClientIP = forwardFor.Split(',').First().Trim();
+                address = actualClientIP;
+                IPEndPoint ipEndPoint = (IPEndPoint)client.Client.RemoteEndPoint;
+                port = ipEndPoint.Port;
             }
             else
             {
